@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Castle Interactive Map - Image Overlay Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d6d3ce;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .map-container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: inline-block;
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 3px solid #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Room button base styles */
+        .room-button {
+            position: absolute;
+            background-color: transparent;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+            font-size: 0;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Edit mode styles */
+        .edit-mode .room-button {
+            background-color: rgba(100, 150, 255, 0.3);
+            border: 2px solid rgba(50, 100, 200, 0.5);
+            cursor: move;
+        }
+
+        .room-button.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+            z-index: 1000;
+        }
+
+        /* Non-edit mode hover and active states */
+        .room-button:not(.edit-mode):hover {
+            border-color: rgba(50, 100, 200, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .room-button:not(.edit-mode).active {
+            border-color: rgba(50, 100, 200, 1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Special room colors - only on hover/active in non-edit mode */
+        .coffee-room:not(.edit-mode):hover,
+        .coffee-room:not(.edit-mode).active {
+            background-color: rgba(255, 193, 7, 0.4);
+            border-color: rgba(255, 193, 7, 0.8);
+        }
+        .edit-mode .coffee-room {
+            background-color: rgba(255, 193, 7, 0.3);
+        }
+
+        .restroom:not(.edit-mode):hover,
+        .restroom:not(.edit-mode).active {
+            background-color: rgba(76, 175, 80, 0.4);
+            border-color: rgba(76, 175, 80, 0.8);
+        }
+        .edit-mode .restroom {
+            background-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .dining-room:not(.edit-mode):hover,
+        .dining-room:not(.edit-mode).active {
+            background-color: rgba(255, 152, 0, 0.4);
+            border-color: rgba(255, 152, 0, 0.8);
+        }
+        .edit-mode .dining-room {
+            background-color: rgba(255, 152, 0, 0.3);
+        }
+
+        .storage:not(.edit-mode):hover,
+        .storage:not(.edit-mode).active {
+            background-color: rgba(233, 30, 99, 0.4);
+            border-color: rgba(233, 30, 99, 0.8);
+        }
+        .edit-mode .storage {
+            background-color: rgba(233, 30, 99, 0.3);
+        }
+
+        .seminar-room:not(.edit-mode):hover,
+        .seminar-room:not(.edit-mode).active {
+            background-color: rgba(0, 188, 212, 0.4);
+            border-color: rgba(0, 188, 212, 0.8);
+        }
+        .edit-mode .seminar-room {
+            background-color: rgba(0, 188, 212, 0.3);
+        }
+
+        /* Default buttons - only on hover/active in non-edit mode */
+        .room-button:not(.coffee-room):not(.restroom):not(.dining-room):not(.storage):not(.seminar-room):not(.edit-mode):hover,
+        .room-button:not(.coffee-room):not(.restroom):not(.dining-room):not(.storage):not(.seminar-room):not(.edit-mode).active {
+            background-color: rgba(100, 150, 255, 0.4);
+            border-color: rgba(50, 100, 200, 0.8);
+        }
+
+        /* Room label (visible in edit mode) */
+        .room-label {
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            pointer-events: none;
+            display: none;
+            text-align: center;
+            padding: 2px;
+        }
+
+        .edit-mode .room-label {
+            display: block;
+        }
+
+        /* Default positions for rooms */
+        .ground-coffee { left: 11%; bottom: 8%; width: 10%; height: 14%; }
+        .ground-restrooms { left: 22.5%; bottom: 8%; width: 10%; height: 14%; }
+        .ground-dining { left: 34%; bottom: 10%; width: 10%; height: 10%; }
+        .ground-restroom { left: 34%; bottom: 6%; width: 10%; height: 4%; }
+        .ground-binns { left: 45.5%; bottom: 8%; width: 10%; height: 14%; }
+
+        .first-office-rooms { left: 4%; bottom: 40%; width: 14%; height: 10%; }
+        .first-house-dresk { left: 20%; bottom: 42%; width: 8%; height: 8%; }
+        .first-office { left: 29%; bottom: 45%; width: 10%; height: 5%; }
+        .first-gleak-moon { left: 29%; bottom: 42%; width: 10%; height: 3%; }
+        .first-loba { left: 29%; bottom: 35%; width: 10%; height: 7%; }
+        .first-coffee1 { left: 4%; bottom: 26%; width: 8%; height: 8%; }
+        .first-coffee2 { left: 13%; bottom: 26%; width: 8%; height: 8%; }
+        .first-book-sharon { left: 22%; bottom: 25%; width: 12%; height: 10%; }
+        .first-wir { left: 35%; bottom: 27%; width: 3%; height: 4%; }
+        .first-dining { left: 39%; bottom: 25%; width: 8%; height: 10%; }
+        .first-restroom { left: 48%; bottom: 25%; width: 7%; height: 10%; }
+        .first-seminar { left: 15%; bottom: 23%; width: 15%; height: 5%; }
+        .first-storage { left: 50%; bottom: 40%; width: 12%; height: 10%; }
+
+        .second-main { left: 5%; bottom: 58%; width: 35%; height: 16%; }
+
+        /* Room info panel - bottom left */
+        .room-info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 2px solid #333;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            min-width: 250px;
+            border-radius: 8px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 900;
+        }
+
+        .room-info-panel.visible {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .room-info-panel h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 18px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .room-info-panel p {
+            color: #666;
+            line-height: 1.4;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .room-info-panel .floor-badge {
+            display: inline-block;
+            background-color: #1976d2;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        /* Debug mode */
+        .debug-mode .room-button {
+            background-color: rgba(255, 0, 0, 0.3);
+            border-color: rgba(255, 0, 0, 0.8);
+        }
+
+        /* Control panel */
+        .control-panel {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .control-button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .control-button:hover {
+            background-color: #555;
+        }
+
+        .control-button.active {
+            background-color: #1976d2;
+        }
+
+        .control-button.save {
+            background-color: #4caf50;
+        }
+
+        .control-button.save:hover {
+            background-color: #45a049;
+        }
+
+        .control-button.reset {
+            background-color: #f44336;
+        }
+
+        .control-button.reset:hover {
+            background-color: #da190b;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .edit-mode-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: none;
+            z-index: 1001;
+        }
+
+        .edit-mode-indicator.visible {
+            display: block;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .room-info-panel {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Castle Interactive Map - Image Overlay Version</h1>
+    <p class="instructions">
+        <span id="mode-instruction">Hover over or click on rooms to view details.</span><br>
+        Use the controls below to edit room positions or toggle debug mode.
+    </p>
+    
+    <div class="control-panel">
+        <button class="control-button" id="edit-mode-btn" onclick="toggleEditMode()">Edit Mode</button>
+        <button class="control-button" onclick="toggleDebugMode()">Toggle Debug</button>
+        <button class="control-button save" onclick="savePositions()">Save Positions</button>
+        <button class="control-button reset" onclick="resetPositions()">Reset to Default</button>
+    </div>
+
+    <div class="edit-mode-indicator" id="edit-indicator">EDIT MODE - Drag rooms to reposition</div>
+
+    <div class="map-container" id="map-container">
+        <img src="image.png" alt="Castle Floor Plan" class="map-image">
+        
+        <!-- Ground Floor Room Buttons -->
+        <button class="room-button coffee-room ground-coffee" 
+                data-room="Coffee Room" 
+                data-floor="Ground"
+                data-description="A comfortable coffee lounge for staff and visitors to relax."
+                data-class="ground-coffee"
+                title="Coffee Room">
+            <span class="room-label">Coffee Room</span>
+        </button>
+
+        <button class="room-button restroom ground-restrooms" 
+                data-room="Restrooms" 
+                data-floor="Ground"
+                data-description="Public restroom facilities."
+                data-class="ground-restrooms"
+                title="Restrooms">
+            <span class="room-label">Restrooms</span>
+        </button>
+
+        <button class="room-button dining-room ground-dining" 
+                data-room="Dining Room" 
+                data-floor="Ground"
+                data-description="Dining area that can accommodate multiple people."
+                data-class="ground-dining"
+                title="Dining Room">
+            <span class="room-label">Dining Room</span>
+        </button>
+
+        <button class="room-button restroom ground-restroom" 
+                data-room="Restroom" 
+                data-floor="Ground"
+                data-description="Private restroom."
+                data-class="ground-restroom"
+                title="Restroom">
+            <span class="room-label">Restroom</span>
+        </button>
+
+        <button class="room-button ground-binns" 
+                data-room="Binns Room" 
+                data-floor="Ground"
+                data-description="Binns Room - purpose to be determined."
+                data-class="ground-binns"
+                title="Binns Room">
+            <span class="room-label">Binns Room</span>
+        </button>
+
+        <!-- First Floor Room Buttons -->
+        <button class="room-button first-office-rooms" 
+                data-room="Office Rooms" 
+                data-floor="First"
+                data-description="Office area containing multiple independent workspaces."
+                data-class="first-office-rooms"
+                title="Office Rooms">
+            <span class="room-label">Office Rooms</span>
+        </button>
+
+        <button class="room-button first-house-dresk" 
+                data-room="House Dresk" 
+                data-floor="First"
+                data-description="Special purpose room."
+                data-class="first-house-dresk"
+                title="House Dresk">
+            <span class="room-label">House Dresk</span>
+        </button>
+
+        <button class="room-button first-office" 
+                data-room="Office" 
+                data-floor="First"
+                data-description="Independent office space."
+                data-class="first-office"
+                title="Office">
+            <span class="room-label">Office</span>
+        </button>
+
+        <button class="room-button first-gleak-moon" 
+                data-room="Gleak Moon" 
+                data-floor="First"
+                data-description="Meeting room or special function room."
+                data-class="first-gleak-moon"
+                title="Gleak Moon">
+            <span class="room-label">Gleak Moon</span>
+        </button>
+
+        <button class="room-button first-loba" 
+                data-room="Loba Rocoos Room" 
+                data-floor="First"
+                data-description="Loba Rocoos dedicated room."
+                data-class="first-loba"
+                title="Loba Rocoos Room">
+            <span class="room-label">Loba Rocoos</span>
+        </button>
+
+        <button class="room-button coffee-room first-coffee1" 
+                data-room="Coffee Room" 
+                data-floor="First"
+                data-description="Staff break area."
+                data-class="first-coffee1"
+                title="Coffee Room">
+            <span class="room-label">Coffee Room</span>
+        </button>
+
+        <button class="room-button coffee-room first-coffee2" 
+                data-room="Coffee Room 2" 
+                data-floor="First"
+                data-description="Second coffee break area."
+                data-class="first-coffee2"
+                title="Coffee Room 2">
+            <span class="room-label">Coffee Room 2</span>
+        </button>
+
+        <button class="room-button first-book-sharon" 
+                data-room="Book Sharon Room" 
+                data-floor="First"
+                data-description="Library/Sharon's office."
+                data-class="first-book-sharon"
+                title="Book Sharon Room">
+            <span class="room-label">Book Sharon</span>
+        </button>
+
+        <button class="room-button first-wir" 
+                data-room="WIR" 
+                data-floor="First"
+                data-description="Walk-in room or storage."
+                data-class="first-wir"
+                title="WIR">
+            <span class="room-label">WIR</span>
+        </button>
+
+        <button class="room-button dining-room first-dining" 
+                data-room="Dining Room" 
+                data-floor="First"
+                data-description="First floor dining area."
+                data-class="first-dining"
+                title="Dining Room">
+            <span class="room-label">Dining Room</span>
+        </button>
+
+        <button class="room-button restroom first-restroom" 
+                data-room="Restroom" 
+                data-floor="First"
+                data-description="First floor restroom facilities."
+                data-class="first-restroom"
+                title="Restroom">
+            <span class="room-label">Restroom</span>
+        </button>
+
+        <button class="room-button seminar-room first-seminar" 
+                data-room="Seminar Room" 
+                data-floor="First"
+                data-description="Seminar room equipped with presentation facilities."
+                data-class="first-seminar"
+                title="Seminar Room">
+            <span class="room-label">Seminar Room</span>
+        </button>
+
+        <button class="room-button storage first-storage" 
+                data-room="Storage" 
+                data-floor="First"
+                data-description="Storage room for supplies and equipment."
+                data-class="first-storage"
+                title="Storage">
+            <span class="room-label">Storage</span>
+        </button>
+
+        <!-- Second Floor Room Buttons -->
+        <button class="room-button second-main" 
+                data-room="Castle Second Floor" 
+                data-floor="Second"
+                data-description="Main second floor area with multiple rooms."
+                data-class="second-main"
+                title="Castle Second Floor">
+            <span class="room-label">Second Floor</span>
+        </button>
+    </div>
+
+    <!-- Room info panel - bottom left -->
+    <div class="room-info-panel" id="roomInfoPanel">
+        <h3 id="roomName">Select a room</h3>
+        <p><span class="floor-badge" id="roomFloor">Floor</span></p>
+        <p id="roomDescription">Hover over or click on a room to see details.</p>
+    </div>
+
+    <script>
+        // Global variables
+        const roomButtons = document.querySelectorAll('.room-button');
+        const roomInfoPanel = document.getElementById('roomInfoPanel');
+        const mapContainer = document.querySelector('.map-container');
+        const editIndicator = document.getElementById('edit-indicator');
+        const modeInstruction = document.getElementById('mode-instruction');
+        const editModeBtn = document.getElementById('edit-mode-btn');
+        
+        let debugMode = false;
+        let editMode = false;
+        let isDragging = false;
+        let currentButton = null;
+        let currentActiveButton = null;
+        let offset = { x: 0, y: 0 };
+        let hideTimeout = null;
+
+        // Initialize room positions from localStorage if available
+        function initializePositions() {
+            const savedPositions = localStorage.getItem('roomPositions');
+            if (savedPositions) {
+                const positions = JSON.parse(savedPositions);
+                roomButtons.forEach(button => {
+                    const className = button.getAttribute('data-class');
+                    if (positions[className]) {
+                        button.style.left = positions[className].left;
+                        button.style.bottom = positions[className].bottom;
+                        button.style.width = positions[className].width;
+                        button.style.height = positions[className].height;
+                    }
+                });
+            }
+        }
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            editMode = !editMode;
+            if (editMode) {
+                mapContainer.classList.add('edit-mode');
+                editIndicator.classList.add('visible');
+                modeInstruction.textContent = 'EDIT MODE: Drag rooms to reposition them.';
+                editModeBtn.classList.add('active');
+                roomButtons.forEach(btn => btn.classList.add('edit-mode'));
+                hideRoomInfo();
+            } else {
+                mapContainer.classList.remove('edit-mode');
+                editIndicator.classList.remove('visible');
+                modeInstruction.textContent = 'Hover over or click on rooms to view details.';
+                editModeBtn.classList.remove('active');
+                roomButtons.forEach(btn => btn.classList.remove('edit-mode'));
+            }
+        }
+
+        // Toggle debug mode
+        function toggleDebugMode() {
+            debugMode = !debugMode;
+            if (debugMode) {
+                mapContainer.classList.add('debug-mode');
+            } else {
+                mapContainer.classList.remove('debug-mode');
+            }
+        }
+
+        // Save current positions to localStorage
+        function savePositions() {
+            const positions = {};
+            roomButtons.forEach(button => {
+                const className = button.getAttribute('data-class');
+                positions[className] = {
+                    left: button.style.left,
+                    bottom: button.style.bottom,
+                    width: button.style.width,
+                    height: button.style.height
+                };
+            });
+            localStorage.setItem('roomPositions', JSON.stringify(positions));
+            alert('Room positions saved successfully!');
+        }
+
+        // Reset positions to default
+        function resetPositions() {
+            if (confirm('Are you sure you want to reset all room positions to default?')) {
+                localStorage.removeItem('roomPositions');
+                location.reload();
+            }
+        }
+
+        // Show room info
+        function showRoomInfo(button) {
+            const roomName = button.getAttribute('data-room');
+            const floor = button.getAttribute('data-floor');
+            const description = button.getAttribute('data-description');
+
+            document.getElementById('roomName').textContent = roomName;
+            document.getElementById('roomFloor').textContent = floor + ' Floor';
+            document.getElementById('roomDescription').textContent = description;
+
+            roomInfoPanel.classList.add('visible');
+        }
+
+        // Hide room info
+        function hideRoomInfo() {
+            roomInfoPanel.classList.remove('visible');
+        }
+
+        // Room button event handlers
+        roomButtons.forEach(button => {
+            // Mouse down for dragging
+            button.addEventListener('mousedown', function(e) {
+                if (editMode) {
+                    isDragging = true;
+                    currentButton = this;
+                    this.classList.add('dragging');
+                    
+                    const rect = this.getBoundingClientRect();
+                    const containerRect = mapContainer.getBoundingClientRect();
+                    
+                    offset.x = e.clientX - rect.left;
+                    offset.y = e.clientY - rect.top;
+                    
+                    e.preventDefault();
+                }
+            });
+
+            // Click handler
+            button.addEventListener('click', function(e) {
+                if (!editMode) {
+                    e.stopPropagation();
+                    
+                    // Remove active class from previous button
+                    if (currentActiveButton && currentActiveButton !== this) {
+                        currentActiveButton.classList.remove('active');
+                    }
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    currentActiveButton = this;
+                    
+                    // Clear any pending hide timeout
+                    if (hideTimeout) {
+                        clearTimeout(hideTimeout);
+                        hideTimeout = null;
+                    }
+                    
+                    showRoomInfo(this);
+                }
+            });
+
+            // Hover handlers for non-edit mode
+            button.addEventListener('mouseenter', function() {
+                if (!editMode) {
+                    // Clear any pending hide timeout
+                    if (hideTimeout) {
+                        clearTimeout(hideTimeout);
+                        hideTimeout = null;
+                    }
+                    
+                    showRoomInfo(this);
+                }
+            });
+
+            button.addEventListener('mouseleave', function() {
+                if (!editMode && !this.classList.contains('active')) {
+                    // Set a timeout to hide the panel
+                    hideTimeout = setTimeout(() => {
+                        // Only hide if no button is active
+                        if (!currentActiveButton) {
+                            hideRoomInfo();
+                        }
+                    }, 300);
+                }
+            });
+        });
+
+        // Keep panel visible when hovering over it
+        roomInfoPanel.addEventListener('mouseenter', function() {
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+                hideTimeout = null;
+            }
+        });
+
+        roomInfoPanel.addEventListener('mouseleave', function() {
+            if (!currentActiveButton) {
+                hideTimeout = setTimeout(() => {
+                    hideRoomInfo();
+                }, 300);
+            }
+        });
+
+        // Global mouse move for dragging
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging && currentButton) {
+                const containerRect = mapContainer.getBoundingClientRect();
+                
+                const x = e.clientX - containerRect.left - offset.x;
+                const y = e.clientY - containerRect.top - offset.y;
+                
+                const percentX = (x / containerRect.width) * 100;
+                const percentY = ((containerRect.height - y - currentButton.offsetHeight) / containerRect.height) * 100;
+                
+                currentButton.style.left = percentX + '%';
+                currentButton.style.bottom = percentY + '%';
+            }
+        });
+
+        // Global mouse up
+        document.addEventListener('mouseup', function() {
+            if (isDragging && currentButton) {
+                currentButton.classList.remove('dragging');
+                isDragging = false;
+                currentButton = null;
+            }
+        });
+
+        // Click outside to deselect
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.room-button') && !e.target.closest('.room-info-panel')) {
+                if (currentActiveButton) {
+                    currentActiveButton.classList.remove('active');
+                    currentActiveButton = null;
+                }
+                hideRoomInfo();
+            }
+        });
+
+        // ESC key to close or exit edit mode
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (editMode) {
+                    toggleEditMode();
+                } else if (currentActiveButton) {
+                    currentActiveButton.classList.remove('active');
+                    currentActiveButton = null;
+                    hideRoomInfo();
+                }
+            }
+        });
+
+        // Initialize positions on load
+        initializePositions();
+    </script>
+</body>
+</html> 

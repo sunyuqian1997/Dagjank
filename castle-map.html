@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Castle Interactive Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d6d3ce;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .castle-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .floor-section {
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        .floor-title {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        svg {
+            background-color: #e8e5e0;
+            border: 3px solid #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .room {
+            fill: white;
+            stroke: #333;
+            stroke-width: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .room:hover {
+            fill: #e3f2fd;
+            stroke-width: 3;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .room.clicked {
+            fill: #bbdefb;
+            stroke: #1976d2;
+            stroke-width: 3;
+        }
+
+        .room-text {
+            pointer-events: none;
+            font-size: 14px;
+            text-anchor: middle;
+            fill: #333;
+        }
+
+        .room-text-small {
+            font-size: 12px;
+        }
+
+        .room-text-italic {
+            font-style: italic;
+        }
+
+        /* Room info popup */
+        .room-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #fff;
+            border: 2px solid #333;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 100;
+            max-width: 300px;
+        }
+
+        .room-info h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .room-info p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* Special room colors */
+        .coffee-room { fill: #fff3e0; }
+        .restroom { fill: #e8f5e9; }
+        .dining-room { fill: #fff9c4; }
+        .storage { fill: #fce4ec; }
+        .seminar-room { fill: #e0f2f1; }
+
+        .flag {
+            fill: none;
+            stroke: #333;
+            stroke-width: 2;
+        }
+
+        .flag-fill {
+            fill: #333;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .castle-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            svg {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .room-info {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                right: auto;
+                width: 90%;
+                max-width: 350px;
+            }
+            
+            .floor-title {
+                font-size: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; margin-bottom: 20px; color: #333;">Castle Interactive Map</h1>
+    <p style="text-align: center; color: #666; margin-bottom: 30px;">
+        Hover over rooms to highlight them. Click on any room to view details.
+    </p>
+    
+    <div class="castle-container">
+        <!-- Ground Floor -->
+        <div class="floor-section">
+            <svg width="600" height="200" viewBox="0 0 600 200">
+                <!-- Coffee Room -->
+                <polygon class="room coffee-room" points="20,20 140,20 140,140 20,140" 
+                         data-room="Coffee Room" data-floor="Ground"></polygon>
+                <text x="80" y="75" class="room-text">Coffee</text>
+                <text x="80" y="95" class="room-text">Room</text>
+                
+                <!-- Restrooms -->
+                <polygon class="room restroom" points="160,20 280,20 280,140 160,140" 
+                         data-room="Restrooms" data-floor="Ground"></polygon>
+                <text x="220" y="80" class="room-text">Restrooms</text>
+                
+                <!-- Dining Room -->
+                <polygon class="room dining-room" points="300,20 440,20 440,100 300,100" 
+                         data-room="Dining Room" data-floor="Ground"></polygon>
+                <text x="370" y="55" class="room-text">Dining</text>
+                <text x="370" y="75" class="room-text">Room</text>
+                
+                <!-- Restroom -->
+                <polygon class="room restroom" points="300,110 440,110 440,140 300,140" 
+                         data-room="Restroom" data-floor="Ground"></polygon>
+                <text x="370" y="130" class="room-text">Restroom</text>
+                
+                <!-- Binns Room -->
+                <polygon class="room" points="460,20 580,20 580,140 460,140" 
+                         data-room="Binns Room" data-floor="Ground"></polygon>
+                <text x="520" y="75" class="room-text">Binns</text>
+                <text x="520" y="95" class="room-text">Room</text>
+            </svg>
+            <div class="floor-title">Castle Groundfloor</div>
+        </div>
+
+        <!-- First Floor -->
+        <div class="floor-section">
+            <svg width="800" height="400" viewBox="0 0 800 400">
+                <!-- Officerooms -->
+                <polygon class="room" points="20,20 180,20 180,140 20,140" 
+                         data-room="Officerooms" data-floor="First"></polygon>
+                <text x="100" y="80" class="room-text">Officerooms</text>
+                
+                <!-- House Dresk -->
+                <polygon class="room" points="200,20 320,20 320,140 200,140" 
+                         data-room="house dresk" data-floor="First"></polygon>
+                <text x="260" y="75" class="room-text room-text-italic">house</text>
+                <text x="260" y="95" class="room-text room-text-italic">dresk</text>
+                
+                <!-- Office + Gleak Moon -->
+                <g>
+                    <polygon class="room" points="340,20 480,20 480,80 340,80" 
+                             data-room="Office" data-floor="First"></polygon>
+                    <text x="410" y="55" class="room-text">Office</text>
+                    
+                    <polygon class="room" points="340,90 480,90 480,140 340,140" 
+                             data-room="Gleak Moon" data-floor="First"></polygon>
+                    <text x="410" y="110" class="room-text room-text-small">Gleak</text>
+                    <text x="410" y="125" class="room-text room-text-small">Moon</text>
+                </g>
+                
+                <!-- Loba Rocoos-room -->
+                <polygon class="room" points="340,150 480,150 480,270 340,270" 
+                         data-room="Loba Rocoos-room" data-floor="First"></polygon>
+                <text x="410" y="195" class="room-text room-text-small">Loba</text>
+                <text x="410" y="215" class="room-text room-text-small">Rocoos-</text>
+                <text x="410" y="235" class="room-text room-text-small">room</text>
+                
+                <!-- Storage -->
+                <polygon class="room storage" points="590,20 770,20 770,140 590,140" 
+                         data-room="Storage" data-floor="First"></polygon>
+                <text x="680" y="80" class="room-text">Storage</text>
+                
+                <!-- Coffee Room (bottom left) -->
+                <polygon class="room coffee-room" points="20,180 140,180 140,270 20,270" 
+                         data-room="Coffee Room" data-floor="First"></polygon>
+                <text x="80" y="215" class="room-text">Coffee</text>
+                <text x="80" y="235" class="room-text">Room</text>
+                
+                <!-- Coffee Room 2 -->
+                <polygon class="room coffee-room" points="150,180 270,180 270,270 150,270" 
+                         data-room="Coffee Room" data-floor="First"></polygon>
+                <text x="210" y="215" class="room-text">Coffee</text>
+                <text x="210" y="235" class="room-text">Room</text>
+                
+                <!-- Book Sharon room -->
+                <polygon class="room" points="280,180 470,180 470,300 280,300" 
+                         data-room="Book Sharon room" data-floor="First"></polygon>
+                <text x="375" y="225" class="room-text">Book</text>
+                <text x="375" y="245" class="room-text">Sharon</text>
+                <text x="375" y="265" class="room-text">room</text>
+                
+                <!-- WIR -->
+                <polygon class="room" points="480,230 540,230 540,290 480,290" 
+                         data-room="WIR" data-floor="First"></polygon>
+                <text x="510" y="265" class="room-text">WIR</text>
+                
+                <!-- Dining Room -->
+                <polygon class="room dining-room" points="550,180 670,180 670,300 550,300" 
+                         data-room="Dining Room" data-floor="First"></polygon>
+                <text x="610" y="230" class="room-text">Dining</text>
+                <text x="610" y="250" class="room-text">Room</text>
+                
+                <!-- Restroom -->
+                <polygon class="room restroom" points="680,180 770,180 770,300 680,300" 
+                         data-room="Restroom" data-floor="First"></polygon>
+                <text x="725" y="240" class="room-text">Restroom</text>
+                
+                <!-- Seminar Room with flag -->
+                <polygon class="room seminar-room" points="200,320 450,320 450,380 200,380" 
+                         data-room="Seminar Room" data-floor="First"></polygon>
+                <text x="325" y="345" class="room-text">Seminar</text>
+                <text x="325" y="365" class="room-text">Room</text>
+                
+                <!-- Flag -->
+                <g transform="translate(430, 310)">
+                    <line x1="0" y1="0" x2="0" y2="20" stroke="#333" stroke-width="2"/>
+                    <path d="M 0,0 L 25,8 L 20,12 L 25,16 L 0,24 Z" class="flag-fill"/>
+                </g>
+            </svg>
+            <div class="floor-title">Castle Firstfloor</div>
+        </div>
+
+        <!-- Second Floor -->
+        <div class="floor-section">
+            <svg width="600" height="300" viewBox="0 0 600 300">
+                <!-- Complex multi-level structure -->
+                <!-- Main outer walls -->
+                <polygon class="room" points="20,20 220,20 220,60 260,60 260,20 440,20 440,120 480,120 480,160 440,160 440,260 20,260 20,120 60,120 60,80 20,80" 
+                         data-room="Castle Second Floor" data-floor="Second"></polygon>
+                
+                <!-- Inner rooms and corridors -->
+                <!-- Top left section -->
+                <rect class="room" x="40" y="40" width="60" height="60" 
+                      data-room="Room 1" data-floor="Second"></rect>
+                
+                <rect class="room" x="110" y="40" width="60" height="60" 
+                      data-room="Room 2" data-floor="Second"></rect>
+                
+                <rect class="room" x="180" y="40" width="40" height="40" 
+                      data-room="Room 3" data-floor="Second"></rect>
+                
+                <!-- Center rooms -->
+                <rect class="room" x="280" y="40" width="60" height="60" 
+                      data-room="Room 4" data-floor="Second"></rect>
+                
+                <rect class="room" x="350" y="40" width="70" height="60" 
+                      data-room="Room 5" data-floor="Second"></rect>
+                
+                <!-- Lower section rooms -->
+                <rect class="room" x="40" y="140" width="80" height="60" 
+                      data-room="Room 6" data-floor="Second"></rect>
+                
+                <rect class="room" x="130" y="140" width="80" height="60" 
+                      data-room="Room 7" data-floor="Second"></rect>
+                
+                <rect class="room" x="220" y="140" width="80" height="60" 
+                      data-room="Room 8" data-floor="Second"></rect>
+                
+                <rect class="room" x="310" y="140" width="80" height="60" 
+                      data-room="Room 9" data-floor="Second"></rect>
+                
+                <!-- Inner courtyard/complex structure -->
+                <polygon class="room" points="240,80 340,80 340,120 300,120 300,100 260,100 260,120 240,120" 
+                         data-room="Inner Complex" data-floor="Second" fill="none"></polygon>
+                
+                <!-- Additional architectural details -->
+                <line x1="20" y1="120" x2="440" y2="120" stroke="#333" stroke-width="2"/>
+                <line x1="220" y1="20" x2="220" y2="120" stroke="#333" stroke-width="2"/>
+                <line x1="260" y1="20" x2="260" y2="60" stroke="#333" stroke-width="2"/>
+                
+                <!-- Small tower room -->
+                <rect class="room" x="460" y="120" width="20" height="40" 
+                      data-room="Tower" data-floor="Second"></rect>
+            </svg>
+            <div class="floor-title">Castle Secondfloor</div>
+        </div>
+    </div>
+
+    <!-- Room info popup -->
+    <div class="room-info" id="roomInfo">
+        <span class="close-btn" onclick="closeRoomInfo()">×</span>
+        <h3 id="roomName"></h3>
+        <p id="roomDetails"></p>
+    </div>
+
+    <script>
+        // Room details
+        const roomDetails = {
+            'Coffee Room': 'A comfortable coffee lounge for staff and visitors to relax.',
+            'Restrooms': 'Public restroom facilities.',
+            'Dining Room': 'Dining area that can accommodate multiple people.',
+            'Restroom': 'Private restroom.',
+            'Binns Room': 'Binns Room - purpose to be determined.',
+            'Officerooms': 'Office area containing multiple independent workspaces.',
+            'house dresk': 'Special purpose room.',
+            'Office': 'Independent office space.',
+            'Gleak Moon': 'Meeting room or special function room.',
+            'Loba Rocoos-room': 'Loba Rocoos dedicated room.',
+            'Storage': 'Storage room for supplies and equipment.',
+            'Book Sharon room': 'Library/Sharon\'s office.',
+            'WIR': 'Walk-in room or storage.',
+            'Seminar Room': 'Seminar room equipped with presentation facilities.',
+            'Room 1': 'Second floor room #1.',
+            'Room 2': 'Second floor room #2.',
+            'Room 3': 'Second floor room #3.',
+            'Room 4': 'Second floor room #4.',
+            'Room 5': 'Second floor room #5.',
+            'Room 6': 'Second floor room #6.',
+            'Room 7': 'Second floor room #7.',
+            'Room 8': 'Second floor room #8.',
+            'Room 9': 'Second floor room #9.',
+            'Castle Second Floor': 'Main second floor area with multiple rooms.',
+            'Inner Complex': 'Inner courtyard complex.',
+            'Tower': 'Small tower access room.'
+        };
+
+        // Get all room elements
+        const rooms = document.querySelectorAll('.room');
+
+        // Add click event to each room
+        rooms.forEach(room => {
+            room.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Remove other rooms' selected state
+                rooms.forEach(r => r.classList.remove('clicked'));
+                
+                // Add selected state to current room
+                this.classList.add('clicked');
+                
+                // Show room info
+                const roomName = this.getAttribute('data-room');
+                const floor = this.getAttribute('data-floor');
+                showRoomInfo(roomName, floor);
+            });
+
+            // Add hover tooltip
+            room.addEventListener('mouseenter', function() {
+                const roomName = this.getAttribute('data-room');
+                this.setAttribute('title', `Click to view details of ${roomName}`);
+            });
+        });
+
+        // Show room info
+        function showRoomInfo(name, floor) {
+            const roomInfo = document.getElementById('roomInfo');
+            const roomNameEl = document.getElementById('roomName');
+            const roomDetailsEl = document.getElementById('roomDetails');
+            
+            roomNameEl.textContent = name;
+            roomDetailsEl.innerHTML = `
+                <strong>Floor:</strong> ${floor} Floor<br>
+                <strong>Description:</strong> ${roomDetails[name] || 'No detailed information available.'}<br>
+                <strong>Status:</strong> Available
+            `;
+            
+            roomInfo.style.display = 'block';
+        }
+
+        // Close room info
+        function closeRoomInfo() {
+            document.getElementById('roomInfo').style.display = 'none';
+            rooms.forEach(r => r.classList.remove('clicked'));
+        }
+
+        // Click outside to close info window
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.room') && !e.target.closest('.room-info')) {
+                closeRoomInfo();
+            }
+        });
+    </script>
+</body>
+</html> 
