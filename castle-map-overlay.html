@@ -229,7 +229,7 @@
             color: #666;
             line-height: 1.5;
             margin: 8px 0;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .room-info-panel .floor-badge {
@@ -252,18 +252,31 @@
             text-align: center;
             padding: 10px;
             box-sizing: border-box;
+            position: relative;
         }
 
         .room-info-panel .room-image.has-image {
             display: block;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
         }
 
         .room-info-panel .room-image img {
             width: 100%;
             height: auto;
-            max-height: 400px;
+            max-height: 200px;
             object-fit: contain;
             display: block;
+            margin: 0 auto;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-info-panel .room-image img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
 
         /* Edit panel for room properties */
@@ -414,6 +427,74 @@
             filter: none;
             background-color: rgba(255, 255, 255, 0.98);
         }
+
+        body.crt-off .image-lightbox {
+            filter: none;
+        }
+
+        /* Image lightbox modal */
+        .image-lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            cursor: pointer;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .image-lightbox.visible {
+            display: flex;
+        }
+
+        .image-lightbox img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            cursor: default;
+        }
+
+        .image-lightbox .close-lightbox {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .image-lightbox .close-lightbox:hover {
+            transform: scale(1.1);
+        }
+
+        .image-lightbox .lightbox-title {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 30px;
+            border-radius: 8px;
+        }
+
+
 
         .control-button.add {
             background-color: #ff9800;
@@ -617,7 +698,7 @@
     
     <h1>Castle Interactive Map - Advanced Editor</h1>
     <p class="instructions">
-        <span id="mode-instruction">Hover over or click on rooms to view details.</span><br>
+        <span id="mode-instruction">Hover over rooms to view details and preview images. Click for full size.</span><br>
         Use the controls below to edit room positions or add new rooms.
     </p>
     
@@ -1372,6 +1453,14 @@
         <div class="room-image" id="roomImage">
             <img id="roomImageDisplay" alt="Room image">
         </div>
+        <p id="roomImageIndicator" style="color: #1976d2; font-style: italic; display: none; margin-top: 5px; font-size: 12px; text-align: center;">📷 Click image or room for full size</p>
+    </div>
+
+    <!-- Image lightbox modal -->
+    <div class="image-lightbox" id="imageLightbox" onclick="closeLightbox()">
+        <button class="close-lightbox" onclick="closeLightbox()">×</button>
+        <img id="lightboxImage" alt="Room image" onclick="event.stopPropagation()">
+        <div class="lightbox-title" id="lightboxTitle"></div>
     </div>
 
     <!-- Edit panel for room properties -->
@@ -1549,6 +1638,16 @@
                 }
                 
                 showRoomInfo(button);
+                
+                // Show lightbox if room has an image
+                const roomName = button.getAttribute('data-room');
+                const floor = button.getAttribute('data-floor');
+                const roomImages = JSON.parse(localStorage.getItem('roomImages') || '{}');
+                const imageKey = `${roomName}_${floor}`.replace(/\s+/g, '_');
+                
+                if (roomImages[imageKey]) {
+                    showLightbox(roomName, `room-images/${roomImages[imageKey]}`);
+                }
             }
         }
 
@@ -1640,7 +1739,7 @@
             } else {
                 mapContainer.classList.remove('edit-mode');
                 editIndicator.classList.remove('visible');
-                modeInstruction.textContent = 'Hover over or click on rooms to view details.';
+                modeInstruction.textContent = 'Hover over rooms to view details and preview images. Click for full size.';
                 editModeBtn.classList.remove('active');
                 addRoomBtn.style.display = 'none';
                 roomButtons.forEach(btn => {
@@ -1908,13 +2007,22 @@
             const imageKey = `${roomName}_${floor}`.replace(/\s+/g, '_');
             const roomImageDiv = document.getElementById('roomImage');
             const roomImageDisplay = document.getElementById('roomImageDisplay');
+            const imageIndicator = document.getElementById('roomImageIndicator');
             
             if (roomImages[imageKey]) {
                 // Use the stored filename to create the path
                 roomImageDisplay.src = `room-images/${roomImages[imageKey]}`;
                 roomImageDiv.classList.add('has-image');
+                imageIndicator.style.display = 'block';
+                
+                // Add click handler to image for lightbox
+                roomImageDisplay.onclick = function(e) {
+                    e.stopPropagation();
+                    showLightbox(roomName, `room-images/${roomImages[imageKey]}`);
+                };
             } else {
                 roomImageDiv.classList.remove('has-image');
+                imageIndicator.style.display = 'none';
             }
 
             // Position panel near cursor
@@ -1925,6 +2033,23 @@
         // Hide room info
         function hideRoomInfo() {
             roomInfoPanel.classList.remove('visible');
+        }
+
+        // Show image lightbox
+        function showLightbox(roomName, imagePath) {
+            const lightbox = document.getElementById('imageLightbox');
+            const lightboxImage = document.getElementById('lightboxImage');
+            const lightboxTitle = document.getElementById('lightboxTitle');
+            
+            lightboxImage.src = imagePath;
+            lightboxTitle.textContent = roomName;
+            lightbox.classList.add('visible');
+        }
+
+        // Close image lightbox
+        function closeLightbox() {
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('visible');
         }
 
         // Update panel position to follow cursor
@@ -2101,7 +2226,11 @@
         // ESC key to close or exit edit mode
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                if (editPanel.style.display === 'block') {
+                // Close lightbox first if it's open
+                const lightbox = document.getElementById('imageLightbox');
+                if (lightbox.classList.contains('visible')) {
+                    closeLightbox();
+                } else if (editPanel.style.display === 'block') {
                     closeEditPanel();
                 } else if (editMode) {
                     toggleEditMode();
