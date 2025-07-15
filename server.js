@@ -24,7 +24,7 @@ const server = http.createServer((req, res) => {
     // Default to index file
     let filePath = '.' + req.url;
     if (filePath === './') {
-        filePath = './castle-map-overlay.html';
+        filePath = './index.html';
     }
 
     // Get file extension
