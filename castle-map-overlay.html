@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Castle Interactive Map - Image Overlay Version</title>
+    <title>Castle Interactive Map - Advanced Editor</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
 
         .map-container {
             position: relative;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: inline-block;
         }
@@ -46,6 +46,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            min-width: 30px;
+            min-height: 20px;
         }
 
         /* Edit mode styles */
@@ -60,6 +63,34 @@
             cursor: grabbing;
             z-index: 1000;
         }
+
+        .room-button.selected {
+            border: 2px solid #1976d2;
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.3);
+            z-index: 100;
+        }
+
+        /* Resize handles */
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #1976d2;
+            border: 1px solid #fff;
+            display: none;
+            cursor: pointer;
+            z-index: 1002;
+            pointer-events: auto;
+        }
+
+        .edit-mode .room-button.selected .resize-handle {
+            display: block;
+        }
+
+        .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
 
         /* Non-edit mode hover and active states */
         .room-button:not(.edit-mode):hover {
@@ -109,59 +140,58 @@
             background-color: rgba(233, 30, 99, 0.3);
         }
 
-        .seminar-room:not(.edit-mode):hover,
-        .seminar-room:not(.edit-mode).active {
-            background-color: rgba(0, 188, 212, 0.4);
-            border-color: rgba(0, 188, 212, 0.8);
+        .lecture-hall:not(.edit-mode):hover,
+        .lecture-hall:not(.edit-mode).active {
+            background-color: rgba(156, 39, 176, 0.4);
+            border-color: rgba(156, 39, 176, 0.8);
         }
-        .edit-mode .seminar-room {
-            background-color: rgba(0, 188, 212, 0.3);
+        .edit-mode .lecture-hall {
+            background-color: rgba(156, 39, 176, 0.3);
+        }
+
+        .office:not(.edit-mode):hover,
+        .office:not(.edit-mode).active {
+            background-color: rgba(3, 169, 244, 0.4);
+            border-color: rgba(3, 169, 244, 0.8);
+        }
+        .edit-mode .office {
+            background-color: rgba(3, 169, 244, 0.3);
+        }
+
+        .library:not(.edit-mode):hover,
+        .library:not(.edit-mode).active {
+            background-color: rgba(103, 58, 183, 0.4);
+            border-color: rgba(103, 58, 183, 0.8);
+        }
+        .edit-mode .library {
+            background-color: rgba(103, 58, 183, 0.3);
         }
 
         /* Default buttons - only on hover/active in non-edit mode */
-        .room-button:not(.coffee-room):not(.restroom):not(.dining-room):not(.storage):not(.seminar-room):not(.edit-mode):hover,
-        .room-button:not(.coffee-room):not(.restroom):not(.dining-room):not(.storage):not(.seminar-room):not(.edit-mode).active {
+        .room-button:not(.coffee-room):not(.restroom):not(.dining-room):not(.storage):not(.lecture-hall):not(.office):not(.library):not(.edit-mode):hover,
+        .room-button:not(.coffee-room):not(.restroom):not(.dining-room):not(.storage):not(.lecture-hall):not(.office):not(.library):not(.edit-mode).active {
             background-color: rgba(100, 150, 255, 0.4);
             border-color: rgba(50, 100, 200, 0.8);
         }
 
         /* Room label (visible in edit mode) */
         .room-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #fff;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
             pointer-events: none;
             display: none;
             text-align: center;
             padding: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
 
         .edit-mode .room-label {
             display: block;
         }
-
-        /* Default positions for rooms */
-        .ground-coffee { left: 11%; bottom: 8%; width: 10%; height: 14%; }
-        .ground-restrooms { left: 22.5%; bottom: 8%; width: 10%; height: 14%; }
-        .ground-dining { left: 34%; bottom: 10%; width: 10%; height: 10%; }
-        .ground-restroom { left: 34%; bottom: 6%; width: 10%; height: 4%; }
-        .ground-binns { left: 45.5%; bottom: 8%; width: 10%; height: 14%; }
-
-        .first-office-rooms { left: 4%; bottom: 40%; width: 14%; height: 10%; }
-        .first-house-dresk { left: 20%; bottom: 42%; width: 8%; height: 8%; }
-        .first-office { left: 29%; bottom: 45%; width: 10%; height: 5%; }
-        .first-gleak-moon { left: 29%; bottom: 42%; width: 10%; height: 3%; }
-        .first-loba { left: 29%; bottom: 35%; width: 10%; height: 7%; }
-        .first-coffee1 { left: 4%; bottom: 26%; width: 8%; height: 8%; }
-        .first-coffee2 { left: 13%; bottom: 26%; width: 8%; height: 8%; }
-        .first-book-sharon { left: 22%; bottom: 25%; width: 12%; height: 10%; }
-        .first-wir { left: 35%; bottom: 27%; width: 3%; height: 4%; }
-        .first-dining { left: 39%; bottom: 25%; width: 8%; height: 10%; }
-        .first-restroom { left: 48%; bottom: 25%; width: 7%; height: 10%; }
-        .first-seminar { left: 15%; bottom: 23%; width: 15%; height: 5%; }
-        .first-storage { left: 50%; bottom: 40%; width: 12%; height: 10%; }
-
-        .second-main { left: 5%; bottom: 58%; width: 35%; height: 16%; }
 
         /* Room info panel - bottom left */
         .room-info-panel {
@@ -172,8 +202,8 @@
             border: 2px solid #333;
             padding: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            max-width: 300px;
-            min-width: 250px;
+            max-width: 350px;
+            min-width: 280px;
             border-radius: 8px;
             transform: translateY(20px);
             opacity: 0;
@@ -213,10 +243,89 @@
             margin-right: 5px;
         }
 
-        /* Debug mode */
-        .debug-mode .room-button {
-            background-color: rgba(255, 0, 0, 0.3);
-            border-color: rgba(255, 0, 0, 0.8);
+        .room-info-panel .room-image {
+            width: 100%;
+            height: 150px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* Edit panel for room properties */
+        .edit-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 2px solid #333;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1001;
+            border-radius: 8px;
+            min-width: 400px;
+        }
+
+        .edit-panel h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+
+        .edit-panel label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .edit-panel input,
+        .edit-panel textarea,
+        .edit-panel select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .edit-panel textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .edit-panel-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .edit-panel button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .edit-panel .save-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .edit-panel .cancel-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .edit-panel .delete-btn {
+            background-color: #ff9800;
+            color: white;
         }
 
         /* Control panel */
@@ -264,6 +373,14 @@
             background-color: #da190b;
         }
 
+        .control-button.add {
+            background-color: #ff9800;
+        }
+
+        .control-button.add:hover {
+            background-color: #e68900;
+        }
+
         h1 {
             text-align: center;
             margin-bottom: 10px;
@@ -293,6 +410,18 @@
             display: block;
         }
 
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
             .room-info-panel {
@@ -302,200 +431,760 @@
                 max-width: none;
                 min-width: auto;
             }
+            
+            .edit-panel {
+                width: 90%;
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Castle Interactive Map - Image Overlay Version</h1>
+    <h1>Castle Interactive Map - Advanced Editor</h1>
     <p class="instructions">
         <span id="mode-instruction">Hover over or click on rooms to view details.</span><br>
-        Use the controls below to edit room positions or toggle debug mode.
+        Use the controls below to edit room positions or add new rooms.
     </p>
     
     <div class="control-panel">
         <button class="control-button" id="edit-mode-btn" onclick="toggleEditMode()">Edit Mode</button>
-        <button class="control-button" onclick="toggleDebugMode()">Toggle Debug</button>
-        <button class="control-button save" onclick="savePositions()">Save Positions</button>
+        <button class="control-button add" onclick="addNewRoom()" id="add-room-btn" style="display: none;">Add Room</button>
+        <button class="control-button save" onclick="savePositions()">Save Layout</button>
         <button class="control-button reset" onclick="resetPositions()">Reset to Default</button>
+        <button class="control-button" onclick="exportLayout()">Export Layout</button>
+        <button class="control-button" onclick="importLayout()">Import Layout</button>
     </div>
 
-    <div class="edit-mode-indicator" id="edit-indicator">EDIT MODE - Drag rooms to reposition</div>
+    <div class="edit-mode-indicator" id="edit-indicator">EDIT MODE - Click rooms to edit, drag to move, drag corners to resize</div>
 
     <div class="map-container" id="map-container">
-        <img src="image.png" alt="Castle Floor Plan" class="map-image">
+        <img src="final.png" alt="Castle Floor Plan" class="map-image">
         
-        <!-- Ground Floor Room Buttons -->
-        <button class="room-button coffee-room ground-coffee" 
-                data-room="Coffee Room" 
-                data-floor="Ground"
-                data-description="A comfortable coffee lounge for staff and visitors to relax."
-                data-class="ground-coffee"
-                title="Coffee Room">
-            <span class="room-label">Coffee Room</span>
+        <!-- Castle Second Floor -->
+        <button class="room-button" 
+                data-room="Castle Secondfloor" 
+                data-floor="Second"
+                data-description="Upper level of the castle with multiple rooms"
+                data-room-type="default"
+                style="left: 3%; top: 25%; width: 15%; height: 18%;">
+            <span class="room-label">Castle Secondfloor</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
         </button>
 
-        <button class="room-button restroom ground-restrooms" 
-                data-room="Restrooms" 
-                data-floor="Ground"
-                data-description="Public restroom facilities."
-                data-class="ground-restrooms"
-                title="Restrooms">
-            <span class="room-label">Restrooms</span>
-        </button>
-
-        <button class="room-button dining-room ground-dining" 
-                data-room="Dining Room" 
-                data-floor="Ground"
-                data-description="Dining area that can accommodate multiple people."
-                data-class="ground-dining"
-                title="Dining Room">
-            <span class="room-label">Dining Room</span>
-        </button>
-
-        <button class="room-button restroom ground-restroom" 
-                data-room="Restroom" 
-                data-floor="Ground"
-                data-description="Private restroom."
-                data-class="ground-restroom"
-                title="Restroom">
-            <span class="room-label">Restroom</span>
-        </button>
-
-        <button class="room-button ground-binns" 
-                data-room="Binns Room" 
-                data-floor="Ground"
-                data-description="Binns Room - purpose to be determined."
-                data-class="ground-binns"
-                title="Binns Room">
-            <span class="room-label">Binns Room</span>
-        </button>
-
-        <!-- First Floor Room Buttons -->
-        <button class="room-button first-office-rooms" 
-                data-room="Office Rooms" 
+        <!-- Castle First Floor Rooms -->
+        <button class="room-button office" 
+                data-room="Offestrooms" 
                 data-floor="First"
-                data-description="Office area containing multiple independent workspaces."
-                data-class="first-office-rooms"
-                title="Office Rooms">
-            <span class="room-label">Office Rooms</span>
+                data-description="Office rooms area"
+                data-room-type="office"
+                style="left: 18%; top: 45%; width: 8%; height: 5%;">
+            <span class="room-label">Offestrooms</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
         </button>
 
-        <button class="room-button first-house-dresk" 
-                data-room="House Dresk" 
+        <button class="room-button" 
+                data-room="house deck" 
                 data-floor="First"
-                data-description="Special purpose room."
-                data-class="first-house-dresk"
-                title="House Dresk">
-            <span class="room-label">House Dresk</span>
+                data-description="Outdoor deck area"
+                data-room-type="default"
+                style="left: 27%; top: 33%; width: 6%; height: 6%;">
+            <span class="room-label">house deck</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
         </button>
 
-        <button class="room-button first-office" 
-                data-room="Office" 
+        <button class="room-button" 
+                data-room="Quino Roran Refing Recor J62" 
                 data-floor="First"
-                data-description="Independent office space."
-                data-class="first-office"
-                title="Office">
-            <span class="room-label">Office</span>
+                data-description="Special purpose room"
+                data-room-type="default"
+                style="left: 34%; top: 33%; width: 6%; height: 8%;">
+            <span class="room-label">Quino Roran Refing Recor J62</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
         </button>
 
-        <button class="room-button first-gleak-moon" 
-                data-room="Gleak Moon" 
-                data-floor="First"
-                data-description="Meeting room or special function room."
-                data-class="first-gleak-moon"
-                title="Gleak Moon">
-            <span class="room-label">Gleak Moon</span>
-        </button>
-
-        <button class="room-button first-loba" 
-                data-room="Loba Rocoos Room" 
-                data-floor="First"
-                data-description="Loba Rocoos dedicated room."
-                data-class="first-loba"
-                title="Loba Rocoos Room">
-            <span class="room-label">Loba Rocoos</span>
-        </button>
-
-        <button class="room-button coffee-room first-coffee1" 
-                data-room="Coffee Room" 
-                data-floor="First"
-                data-description="Staff break area."
-                data-class="first-coffee1"
-                title="Coffee Room">
-            <span class="room-label">Coffee Room</span>
-        </button>
-
-        <button class="room-button coffee-room first-coffee2" 
-                data-room="Coffee Room 2" 
-                data-floor="First"
-                data-description="Second coffee break area."
-                data-class="first-coffee2"
-                title="Coffee Room 2">
-            <span class="room-label">Coffee Room 2</span>
-        </button>
-
-        <button class="room-button first-book-sharon" 
-                data-room="Book Sharon Room" 
-                data-floor="First"
-                data-description="Library/Sharon's office."
-                data-class="first-book-sharon"
-                title="Book Sharon Room">
-            <span class="room-label">Book Sharon</span>
-        </button>
-
-        <button class="room-button first-wir" 
-                data-room="WIR" 
-                data-floor="First"
-                data-description="Walk-in room or storage."
-                data-class="first-wir"
-                title="WIR">
-            <span class="room-label">WIR</span>
-        </button>
-
-        <button class="room-button dining-room first-dining" 
-                data-room="Dining Room" 
-                data-floor="First"
-                data-description="First floor dining area."
-                data-class="first-dining"
-                title="Dining Room">
-            <span class="room-label">Dining Room</span>
-        </button>
-
-        <button class="room-button restroom first-restroom" 
-                data-room="Restroom" 
-                data-floor="First"
-                data-description="First floor restroom facilities."
-                data-class="first-restroom"
-                title="Restroom">
-            <span class="room-label">Restroom</span>
-        </button>
-
-        <button class="room-button seminar-room first-seminar" 
-                data-room="Seminar Room" 
-                data-floor="First"
-                data-description="Seminar room equipped with presentation facilities."
-                data-class="first-seminar"
-                title="Seminar Room">
-            <span class="room-label">Seminar Room</span>
-        </button>
-
-        <button class="room-button storage first-storage" 
+        <button class="room-button storage" 
                 data-room="Storage" 
                 data-floor="First"
-                data-description="Storage room for supplies and equipment."
-                data-class="first-storage"
-                title="Storage">
+                data-description="Storage room"
+                data-room-type="storage"
+                style="left: 48%; top: 25%; width: 8%; height: 6%;">
             <span class="room-label">Storage</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
         </button>
 
-        <!-- Second Floor Room Buttons -->
-        <button class="room-button second-main" 
-                data-room="Castle Second Floor" 
-                data-floor="Second"
-                data-description="Main second floor area with multiple rooms."
-                data-class="second-main"
-                title="Castle Second Floor">
-            <span class="room-label">Second Floor</span>
+        <button class="room-button" 
+                data-room="Seminar Room" 
+                data-floor="First"
+                data-description="Seminar and meeting room"
+                data-room-type="default"
+                style="left: 35%; top: 20%; width: 10%; height: 5%;">
+            <span class="room-label">Seminar Room</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Quasi Room" 
+                data-floor="First"
+                data-description="Quasi Room"
+                data-room-type="default"
+                style="left: 34%; top: 42%; width: 6%; height: 4%;">
+            <span class="room-label">Quasi Room</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Persona Dialog" 
+                data-floor="First"
+                data-description="Dialog room"
+                data-room-type="default"
+                style="left: 34%; top: 47%; width: 6%; height: 4%;">
+            <span class="room-label">Persona Dialog</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button coffee-room" 
+                data-room="Coffee Room" 
+                data-floor="First"
+                data-description="Coffee lounge"
+                data-room-type="coffee-room"
+                style="left: 28%; top: 52%; width: 8%; height: 7%;">
+            <span class="room-label">Coffee Room</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Dargag" 
+                data-floor="First"
+                data-description="Dargag room"
+                data-room-type="default"
+                style="left: 36.5%; top: 52%; width: 5%; height: 4%;">
+            <span class="room-label">Dargag</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Book shore room" 
+                data-floor="First"
+                data-description="Book room"
+                data-room-type="default"
+                style="left: 42%; top: 42%; width: 9%; height: 8%;">
+            <span class="room-label">Book shore room</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button restroom" 
+                data-room="Restroom" 
+                data-floor="First"
+                data-description="Restroom facilities"
+                data-room-type="restroom"
+                style="left: 48%; top: 35%; width: 6%; height: 4%;">
+            <span class="room-label">Restroom</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button restroom" 
+                data-room="Restream Room" 
+                data-floor="First"
+                data-description="Restream facilities"
+                data-room-type="restroom"
+                style="left: 48%; top: 40%; width: 6%; height: 4%;">
+            <span class="room-label">Restream Room</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="wilk" 
+                data-floor="First"
+                data-description="WIK room"
+                data-room-type="default"
+                style="left: 51.5%; top: 42%; width: 3%; height: 3%;">
+            <span class="room-label">wilk</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button dining-room" 
+                data-room="Dining" 
+                data-floor="First"
+                data-description="Main dining area"
+                data-room-type="dining-room"
+                style="left: 42%; top: 52%; width: 7%; height: 7%;">
+            <span class="room-label">Dining</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button dining-room" 
+                data-room="Diang Room Dining" 
+                data-floor="First"
+                data-description="Secondary dining room"
+                data-room-type="dining-room"
+                style="left: 50%; top: 47%; width: 6%; height: 6%;">
+            <span class="room-label">Diang Room Dining</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Castle Ground Floor (middle) -->
+        <button class="room-button" 
+                data-room="Castle Groundfloor" 
+                data-floor="Ground"
+                data-description="Main ground floor area"
+                data-room-type="default"
+                style="left: 28%; top: 60%; width: 28%; height: 8%;">
+            <span class="room-label">Castle Groundfloor</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Castle Ground Floor (right section) -->
+        <button class="room-button office" 
+                data-room="Office" 
+                data-floor="Ground"
+                data-description="Ground floor office"
+                data-room-type="office"
+                style="left: 73%; top: 33%; width: 6%; height: 4%;">
+            <span class="room-label">Office</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button lecture-hall" 
+                data-room="Lecture Hall Stakbor" 
+                data-floor="Ground"
+                data-description="Stakbor lecture hall"
+                data-room-type="lecture-hall"
+                style="left: 67%; top: 42%; width: 15%; height: 10%;">
+            <span class="room-label">Lecture Hall Stakbor</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button library" 
+                data-room="Library" 
+                data-floor="Ground"
+                data-description="Main library"
+                data-room-type="library"
+                style="left: 73%; top: 53%; width: 9%; height: 8%;">
+            <span class="room-label">Library</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button storage" 
+                data-room="Storage" 
+                data-floor="Ground"
+                data-description="Ground floor storage"
+                data-room-type="storage"
+                style="left: 82%; top: 25%; width: 10%; height: 6%;">
+            <span class="room-label">Storage</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Guesthouse First Floor -->
+        <button class="room-button" 
+                data-room="Room 101" 
+                data-floor="Guesthouse First"
+                data-description="Guest room 101"
+                data-room-type="default"
+                style="left: 3%; top: 75%; width: 5%; height: 4%;">
+            <span class="room-label">101</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Room 107" 
+                data-floor="Guesthouse First"
+                data-description="Guest room 107"
+                data-room-type="default"
+                style="left: 3%; top: 80%; width: 5%; height: 4%;">
+            <span class="room-label">107</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Room 103" 
+                data-floor="Guesthouse First"
+                data-description="Guest room 103"
+                data-room-type="default"
+                style="left: 3%; top: 85%; width: 5%; height: 4%;">
+            <span class="room-label">103</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Room 104" 
+                data-floor="Guesthouse First"
+                data-description="Guest room 104"
+                data-room-type="default"
+                style="left: 3%; top: 90%; width: 5%; height: 4%;">
+            <span class="room-label">104</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="Room 105" 
+                data-floor="Guesthouse First"
+                data-description="Guest room 105"
+                data-room-type="default"
+                style="left: 3%; top: 95%; width: 5%; height: 4%;">
+            <span class="room-label">105</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- New Building (left section) -->
+        <button class="room-button office" 
+                data-room="Office" 
+                data-floor="New Building"
+                data-description="New building office"
+                data-room-type="office"
+                style="left: 32%; top: 75%; width: 6%; height: 4%;">
+            <span class="room-label">office</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO5" 
+                data-floor="New Building"
+                data-description="Room NO5"
+                data-room-type="default"
+                style="left: 18%; top: 80%; width: 3%; height: 3%;">
+            <span class="room-label">NO5</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO2" 
+                data-floor="New Building"
+                data-description="Room NO2"
+                data-room-type="default"
+                style="left: 18%; top: 84%; width: 3%; height: 3%;">
+            <span class="room-label">NO2</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO3" 
+                data-floor="New Building"
+                data-description="Room NO3"
+                data-room-type="default"
+                style="left: 18%; top: 88%; width: 3%; height: 3%;">
+            <span class="room-label">NO3</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO1" 
+                data-floor="New Building"
+                data-description="Room NO1"
+                data-room-type="default"
+                style="left: 18%; top: 92%; width: 3%; height: 3%;">
+            <span class="room-label">NO1</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button lecture-hall" 
+                data-room="Lecture Hall Stakbor" 
+                data-floor="New Building"
+                data-description="New building lecture hall"
+                data-room-type="lecture-hall"
+                style="left: 23%; top: 82%; width: 12%; height: 12%;">
+            <span class="room-label">Lecture Hall Stakbor</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Lecture Hall Frankfurt -->
+        <button class="room-button lecture-hall" 
+                data-room="Lecture Hall Frankfurt" 
+                data-floor="Ground"
+                data-description="Frankfurt lecture hall with seating"
+                data-room-type="lecture-hall"
+                style="left: 58%; top: 75%; width: 23%; height: 20%;">
+            <span class="room-label">Lecture Hall "Frankfurt"</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Additional numbered rooms -->
+        <button class="room-button" 
+                data-room="NO17" 
+                data-floor="Ground"
+                data-description="Room NO17"
+                data-room-type="default"
+                style="left: 56%; top: 91%; width: 2.5%; height: 3%;">
+            <span class="room-label">NO17</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO13" 
+                data-floor="Ground"
+                data-description="Room NO13"
+                data-room-type="default"
+                style="left: 59%; top: 91%; width: 2.5%; height: 3%;">
+            <span class="room-label">NO13</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO14" 
+                data-floor="Ground"
+                data-description="Room NO14"
+                data-room-type="default"
+                style="left: 62%; top: 91%; width: 2.5%; height: 3%;">
+            <span class="room-label">NO14</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO15" 
+                data-floor="Ground"
+                data-description="Room NO15"
+                data-room-type="default"
+                style="left: 65%; top: 91%; width: 2.5%; height: 3%;">
+            <span class="room-label">NO15</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO12" 
+                data-floor="Ground"
+                data-description="Room NO12"
+                data-room-type="default"
+                style="left: 68%; top: 91%; width: 2.5%; height: 3%;">
+            <span class="room-label">NO12</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO13" 
+                data-floor="Ground"
+                data-description="Room NO13"
+                data-room-type="default"
+                style="left: 71%; top: 91%; width: 2.5%; height: 3%;">
+            <span class="room-label">NO13</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Stairs -->
+        <button class="room-button" 
+                data-room="Stairs" 
+                data-floor="Ground"
+                data-description="Stairway access"
+                data-room-type="default"
+                style="left: 88%; top: 75%; width: 8%; height: 20%;">
+            <span class="room-label">Stairs</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Additional New Building rooms on right -->
+        <button class="room-button" 
+                data-room="NO8" 
+                data-floor="New Building"
+                data-description="Room NO8"
+                data-room-type="default"
+                style="left: 55%; top: 38%; width: 3%; height: 3%;">
+            <span class="room-label">NO8</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO6" 
+                data-floor="New Building"
+                data-description="Room NO6"
+                data-room-type="default"
+                style="left: 55%; top: 42%; width: 3%; height: 3%;">
+            <span class="room-label">NO6</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO9" 
+                data-floor="New Building"
+                data-description="Room NO9"
+                data-room-type="default"
+                style="left: 55%; top: 46%; width: 3%; height: 3%;">
+            <span class="room-label">NO9</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO1" 
+                data-floor="New Building"
+                data-description="Room NO1"
+                data-room-type="default"
+                style="left: 55%; top: 50%; width: 3%; height: 3%;">
+            <span class="room-label">NO1</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO1" 
+                data-floor="New Building"
+                data-description="Room NO1"
+                data-room-type="default"
+                style="left: 55%; top: 54%; width: 3%; height: 3%;">
+            <span class="room-label">NO1</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO9" 
+                data-floor="New Building"
+                data-description="Room NO9"
+                data-room-type="default"
+                style="left: 55%; top: 58%; width: 3%; height: 3%;">
+            <span class="room-label">NO9</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Right side additional rooms -->
+        <button class="room-button" 
+                data-room="NO2" 
+                data-floor="Ground"
+                data-description="Room NO2"
+                data-room-type="default"
+                style="left: 93%; top: 33%; width: 3%; height: 3%;">
+            <span class="room-label">NO2</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO6" 
+                data-floor="Ground"
+                data-description="Room NO6"
+                data-room-type="default"
+                style="left: 93%; top: 42%; width: 3%; height: 3%;">
+            <span class="room-label">NO6</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO4" 
+                data-floor="Ground"
+                data-description="Room NO4"
+                data-room-type="default"
+                style="left: 93%; top: 46%; width: 3%; height: 3%;">
+            <span class="room-label">NO4</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO5" 
+                data-floor="Ground"
+                data-description="Room NO5"
+                data-room-type="default"
+                style="left: 93%; top: 50%; width: 3%; height: 3%;">
+            <span class="room-label">NO5</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO2" 
+                data-floor="Ground"
+                data-description="Room NO2"
+                data-room-type="default"
+                style="left: 93%; top: 54%; width: 3%; height: 3%;">
+            <span class="room-label">NO2</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO1" 
+                data-floor="Ground"
+                data-description="Room NO1"
+                data-room-type="default"
+                style="left: 93%; top: 58%; width: 3%; height: 3%;">
+            <span class="room-label">NO1</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <!-- Bottom New Building rooms -->
+        <button class="room-button" 
+                data-room="NO2" 
+                data-floor="New Building Bottom"
+                data-description="Room NO2"
+                data-room-type="default"
+                style="left: 39%; top: 84%; width: 3%; height: 3%;">
+            <span class="room-label">NO2</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO1" 
+                data-floor="New Building Bottom"
+                data-description="Room NO1"
+                data-room-type="default"
+                style="left: 39%; top: 88%; width: 3%; height: 3%;">
+            <span class="room-label">NO1</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        </button>
+
+        <button class="room-button" 
+                data-room="NO5" 
+                data-floor="New Building Bottom"
+                data-description="Room NO5"
+                data-room-type="default"
+                style="left: 39%; top: 92%; width: 3%; height: 3%;">
+            <span class="room-label">NO5</span>
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
         </button>
     </div>
 
@@ -504,40 +1193,245 @@
         <h3 id="roomName">Select a room</h3>
         <p><span class="floor-badge" id="roomFloor">Floor</span></p>
         <p id="roomDescription">Hover over or click on a room to see details.</p>
+        <div class="room-image" id="roomImage">
+            <span>No image available</span>
+        </div>
+    </div>
+
+    <!-- Edit panel for room properties -->
+    <div class="overlay" id="overlay"></div>
+    <div class="edit-panel" id="editPanel">
+        <h3>Edit Room Properties</h3>
+        <label for="editRoomName">Room Name:</label>
+        <input type="text" id="editRoomName" placeholder="Enter room name">
+        
+        <label for="editRoomFloor">Floor:</label>
+        <input type="text" id="editRoomFloor" placeholder="Enter floor">
+        
+        <label for="editRoomType">Room Type:</label>
+        <select id="editRoomType">
+            <option value="default">Default</option>
+            <option value="office">Office</option>
+            <option value="coffee-room">Coffee Room</option>
+            <option value="restroom">Restroom</option>
+            <option value="dining-room">Dining Room</option>
+            <option value="storage">Storage</option>
+            <option value="lecture-hall">Lecture Hall</option>
+            <option value="library">Library</option>
+        </select>
+        
+        <label for="editRoomDescription">Description:</label>
+        <textarea id="editRoomDescription" placeholder="Enter room description"></textarea>
+        
+        <div class="edit-panel-buttons">
+            <button class="delete-btn" onclick="deleteRoom()">Delete Room</button>
+            <button class="cancel-btn" onclick="closeEditPanel()">Cancel</button>
+            <button class="save-btn" onclick="saveRoomEdit()">Save</button>
+        </div>
     </div>
 
     <script>
         // Global variables
-        const roomButtons = document.querySelectorAll('.room-button');
+        let roomButtons = document.querySelectorAll('.room-button');
         const roomInfoPanel = document.getElementById('roomInfoPanel');
         const mapContainer = document.querySelector('.map-container');
         const editIndicator = document.getElementById('edit-indicator');
         const modeInstruction = document.getElementById('mode-instruction');
         const editModeBtn = document.getElementById('edit-mode-btn');
+        const addRoomBtn = document.getElementById('add-room-btn');
+        const editPanel = document.getElementById('editPanel');
+        const overlay = document.getElementById('overlay');
         
         let debugMode = false;
         let editMode = false;
         let isDragging = false;
+        let isResizing = false;
         let currentButton = null;
         let currentActiveButton = null;
+        let selectedButton = null;
         let offset = { x: 0, y: 0 };
         let hideTimeout = null;
+        let resizeHandle = null;
+        let initialResize = {};
+        let roomCounter = 1;
+
+        // Initialize
+        function init() {
+            initializePositions();
+            updateRoomButtons();
+            attachEventListeners();
+        }
+
+        // Update room buttons reference
+        function updateRoomButtons() {
+            roomButtons = document.querySelectorAll('.room-button');
+            attachEventListeners();
+        }
+
+        // Attach event listeners using delegation
+        function attachEventListeners() {
+            // Remove any existing listeners on container
+            mapContainer.removeEventListener('mousedown', handleMouseDown);
+            mapContainer.removeEventListener('click', handleClick);
+            mapContainer.removeEventListener('mouseenter', handleMouseEnter, true);
+            mapContainer.removeEventListener('mouseleave', handleMouseLeave, true);
+            
+            // Add new listeners
+            mapContainer.addEventListener('mousedown', handleMouseDown);
+            mapContainer.addEventListener('click', handleClick);
+            mapContainer.addEventListener('mouseenter', handleMouseEnter, true);
+            mapContainer.addEventListener('mouseleave', handleMouseLeave, true);
+        }
+
+        // Handle mouse down
+        function handleMouseDown(e) {
+            const button = e.target.closest('.room-button');
+            if (!button || !editMode) return;
+            
+            if (e.target.classList.contains('resize-handle')) {
+                // Start resizing
+                isResizing = true;
+                resizeHandle = e.target;
+                currentButton = button;
+                initialResize = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    width: button.offsetWidth,
+                    height: button.offsetHeight,
+                    left: button.offsetLeft,
+                    top: button.offsetTop
+                };
+                e.preventDefault();
+                e.stopPropagation();
+            } else if (!e.target.classList.contains('room-label')) {
+                // Start dragging
+                isDragging = true;
+                currentButton = button;
+                button.classList.add('dragging');
+                
+                const rect = button.getBoundingClientRect();
+                const containerRect = mapContainer.getBoundingClientRect();
+                
+                offset.x = e.clientX - rect.left;
+                offset.y = e.clientY - rect.top;
+                
+                e.preventDefault();
+            }
+        }
+
+        // Handle click
+        function handleClick(e) {
+            const button = e.target.closest('.room-button');
+            if (!button) return;
+            
+            if (editMode && !isDragging && !isResizing) {
+                e.stopPropagation();
+                
+                // Select for editing
+                if (selectedButton) {
+                    selectedButton.classList.remove('selected');
+                }
+                button.classList.add('selected');
+                selectedButton = button;
+                
+                // Open edit panel on double click
+                if (e.detail === 2) {
+                    openEditPanel(button);
+                }
+            } else if (!editMode) {
+                e.stopPropagation();
+                
+                // Remove active class from previous button
+                if (currentActiveButton && currentActiveButton !== button) {
+                    currentActiveButton.classList.remove('active');
+                }
+                
+                // Add active class to clicked button
+                button.classList.add('active');
+                currentActiveButton = button;
+                
+                // Clear any pending hide timeout
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+                
+                showRoomInfo(button);
+            }
+        }
+
+        // Handle mouse enter
+        function handleMouseEnter(e) {
+            const button = e.target.closest('.room-button');
+            if (!button || editMode) return;
+            
+            // Clear any pending hide timeout
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+                hideTimeout = null;
+            }
+            
+            showRoomInfo(button);
+        }
+
+        // Handle mouse leave  
+        function handleMouseLeave(e) {
+            const button = e.target.closest('.room-button');
+            if (!button || editMode) return;
+            
+            if (!button.classList.contains('active')) {
+                // Set a timeout to hide the panel
+                hideTimeout = setTimeout(() => {
+                    // Only hide if no button is active
+                    if (!currentActiveButton) {
+                        hideRoomInfo();
+                    }
+                }, 300);
+            }
+        }
 
         // Initialize room positions from localStorage if available
         function initializePositions() {
-            const savedPositions = localStorage.getItem('roomPositions');
-            if (savedPositions) {
-                const positions = JSON.parse(savedPositions);
-                roomButtons.forEach(button => {
-                    const className = button.getAttribute('data-class');
-                    if (positions[className]) {
-                        button.style.left = positions[className].left;
-                        button.style.bottom = positions[className].bottom;
-                        button.style.width = positions[className].width;
-                        button.style.height = positions[className].height;
-                    }
+            const savedLayout = localStorage.getItem('roomLayout');
+            if (savedLayout) {
+                const layout = JSON.parse(savedLayout);
+                // Clear existing rooms and recreate from saved layout
+                const container = document.getElementById('map-container');
+                const existingButtons = container.querySelectorAll('.room-button');
+                existingButtons.forEach(btn => btn.remove());
+                
+                layout.rooms.forEach(room => {
+                    createRoomButton(room);
                 });
+                
+                updateRoomButtons();
             }
+        }
+
+        // Create a room button
+        function createRoomButton(config) {
+            const button = document.createElement('button');
+            button.className = `room-button ${config.roomType || ''}`;
+            button.setAttribute('data-room', config.name);
+            button.setAttribute('data-floor', config.floor);
+            button.setAttribute('data-description', config.description);
+            button.setAttribute('data-room-type', config.roomType || 'default');
+            button.style.left = config.left;
+            button.style.top = config.top || '';
+            button.style.bottom = config.bottom || '';
+            button.style.width = config.width;
+            button.style.height = config.height;
+            
+            button.innerHTML = `
+                <span class="room-label">${config.name}</span>
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            `;
+            
+            mapContainer.appendChild(button);
+            return button;
         }
 
         // Toggle edit mode
@@ -546,8 +1440,9 @@
             if (editMode) {
                 mapContainer.classList.add('edit-mode');
                 editIndicator.classList.add('visible');
-                modeInstruction.textContent = 'EDIT MODE: Drag rooms to reposition them.';
+                modeInstruction.textContent = 'EDIT MODE: Double-click rooms to edit properties. Single click to select. Drag to move, drag corners to resize.';
                 editModeBtn.classList.add('active');
+                addRoomBtn.style.display = 'inline-block';
                 roomButtons.forEach(btn => btn.classList.add('edit-mode'));
                 hideRoomInfo();
             } else {
@@ -555,42 +1450,181 @@
                 editIndicator.classList.remove('visible');
                 modeInstruction.textContent = 'Hover over or click on rooms to view details.';
                 editModeBtn.classList.remove('active');
-                roomButtons.forEach(btn => btn.classList.remove('edit-mode'));
+                addRoomBtn.style.display = 'none';
+                roomButtons.forEach(btn => {
+                    btn.classList.remove('edit-mode');
+                    btn.classList.remove('selected');
+                });
+                selectedButton = null;
             }
         }
 
-        // Toggle debug mode
-        function toggleDebugMode() {
-            debugMode = !debugMode;
-            if (debugMode) {
-                mapContainer.classList.add('debug-mode');
-            } else {
-                mapContainer.classList.remove('debug-mode');
+        // Add new room
+        function addNewRoom() {
+            const config = {
+                name: `New Room ${roomCounter++}`,
+                floor: 'Unknown',
+                description: 'Click to edit this room',
+                roomType: 'default',
+                left: '45%',
+                top: '45%',
+                width: '8%',
+                height: '6%'
+            };
+            
+            const newButton = createRoomButton(config);
+            updateRoomButtons();
+            
+            // Select the new room
+            if (selectedButton) {
+                selectedButton.classList.remove('selected');
+            }
+            newButton.classList.add('selected');
+            selectedButton = newButton;
+        }
+
+        // Open edit panel
+        function openEditPanel(button) {
+            const roomName = button.getAttribute('data-room');
+            const floor = button.getAttribute('data-floor');
+            const description = button.getAttribute('data-description');
+            const roomType = button.getAttribute('data-room-type');
+            
+            document.getElementById('editRoomName').value = roomName;
+            document.getElementById('editRoomFloor').value = floor;
+            document.getElementById('editRoomDescription').value = description;
+            document.getElementById('editRoomType').value = roomType;
+            
+            overlay.style.display = 'block';
+            editPanel.style.display = 'block';
+        }
+
+        // Close edit panel
+        function closeEditPanel() {
+            overlay.style.display = 'none';
+            editPanel.style.display = 'none';
+        }
+
+        // Save room edit
+        function saveRoomEdit() {
+            if (selectedButton) {
+                const newName = document.getElementById('editRoomName').value;
+                const newFloor = document.getElementById('editRoomFloor').value;
+                const newDescription = document.getElementById('editRoomDescription').value;
+                const newType = document.getElementById('editRoomType').value;
+                
+                selectedButton.setAttribute('data-room', newName);
+                selectedButton.setAttribute('data-floor', newFloor);
+                selectedButton.setAttribute('data-description', newDescription);
+                selectedButton.setAttribute('data-room-type', newType);
+                
+                // Update room type class
+                selectedButton.className = `room-button ${newType} ${editMode ? 'edit-mode' : ''} selected`;
+                
+                // Update label
+                selectedButton.querySelector('.room-label').textContent = newName;
+                
+                closeEditPanel();
+            }
+        }
+
+        // Delete room
+        function deleteRoom() {
+            if (selectedButton && confirm('Are you sure you want to delete this room?')) {
+                selectedButton.remove();
+                selectedButton = null;
+                closeEditPanel();
+                updateRoomButtons();
             }
         }
 
         // Save current positions to localStorage
         function savePositions() {
-            const positions = {};
+            const layout = {
+                rooms: []
+            };
+            
             roomButtons.forEach(button => {
-                const className = button.getAttribute('data-class');
-                positions[className] = {
+                layout.rooms.push({
+                    name: button.getAttribute('data-room'),
+                    floor: button.getAttribute('data-floor'),
+                    description: button.getAttribute('data-description'),
+                    roomType: button.getAttribute('data-room-type'),
                     left: button.style.left,
+                    top: button.style.top,
                     bottom: button.style.bottom,
                     width: button.style.width,
                     height: button.style.height
-                };
+                });
             });
-            localStorage.setItem('roomPositions', JSON.stringify(positions));
-            alert('Room positions saved successfully!');
+            
+            localStorage.setItem('roomLayout', JSON.stringify(layout));
+            alert('Room layout saved successfully!');
         }
 
         // Reset positions to default
         function resetPositions() {
-            if (confirm('Are you sure you want to reset all room positions to default?')) {
-                localStorage.removeItem('roomPositions');
+            if (confirm('Are you sure you want to reset all rooms to default? This will delete any custom rooms.')) {
+                localStorage.removeItem('roomLayout');
                 location.reload();
             }
+        }
+
+        // Export layout
+        function exportLayout() {
+            const layout = {
+                rooms: []
+            };
+            
+            roomButtons.forEach(button => {
+                layout.rooms.push({
+                    name: button.getAttribute('data-room'),
+                    floor: button.getAttribute('data-floor'),
+                    description: button.getAttribute('data-description'),
+                    roomType: button.getAttribute('data-room-type'),
+                    left: button.style.left,
+                    top: button.style.top,
+                    bottom: button.style.bottom,
+                    width: button.style.width,
+                    height: button.style.height
+                });
+            });
+            
+            const dataStr = JSON.stringify(layout, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'castle-map-layout.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        // Import layout
+        function importLayout() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = event => {
+                    try {
+                        const layout = JSON.parse(event.target.result);
+                        localStorage.setItem('roomLayout', JSON.stringify(layout));
+                        location.reload();
+                    } catch (error) {
+                        alert('Invalid layout file');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
 
         // Show room info
@@ -600,7 +1634,7 @@
             const description = button.getAttribute('data-description');
 
             document.getElementById('roomName').textContent = roomName;
-            document.getElementById('roomFloor').textContent = floor + ' Floor';
+            document.getElementById('roomFloor').textContent = floor;
             document.getElementById('roomDescription').textContent = description;
 
             roomInfoPanel.classList.add('visible');
@@ -610,75 +1644,6 @@
         function hideRoomInfo() {
             roomInfoPanel.classList.remove('visible');
         }
-
-        // Room button event handlers
-        roomButtons.forEach(button => {
-            // Mouse down for dragging
-            button.addEventListener('mousedown', function(e) {
-                if (editMode) {
-                    isDragging = true;
-                    currentButton = this;
-                    this.classList.add('dragging');
-                    
-                    const rect = this.getBoundingClientRect();
-                    const containerRect = mapContainer.getBoundingClientRect();
-                    
-                    offset.x = e.clientX - rect.left;
-                    offset.y = e.clientY - rect.top;
-                    
-                    e.preventDefault();
-                }
-            });
-
-            // Click handler
-            button.addEventListener('click', function(e) {
-                if (!editMode) {
-                    e.stopPropagation();
-                    
-                    // Remove active class from previous button
-                    if (currentActiveButton && currentActiveButton !== this) {
-                        currentActiveButton.classList.remove('active');
-                    }
-                    
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                    currentActiveButton = this;
-                    
-                    // Clear any pending hide timeout
-                    if (hideTimeout) {
-                        clearTimeout(hideTimeout);
-                        hideTimeout = null;
-                    }
-                    
-                    showRoomInfo(this);
-                }
-            });
-
-            // Hover handlers for non-edit mode
-            button.addEventListener('mouseenter', function() {
-                if (!editMode) {
-                    // Clear any pending hide timeout
-                    if (hideTimeout) {
-                        clearTimeout(hideTimeout);
-                        hideTimeout = null;
-                    }
-                    
-                    showRoomInfo(this);
-                }
-            });
-
-            button.addEventListener('mouseleave', function() {
-                if (!editMode && !this.classList.contains('active')) {
-                    // Set a timeout to hide the panel
-                    hideTimeout = setTimeout(() => {
-                        // Only hide if no button is active
-                        if (!currentActiveButton) {
-                            hideRoomInfo();
-                        }
-                    }, 300);
-                }
-            });
-        });
 
         // Keep panel visible when hovering over it
         roomInfoPanel.addEventListener('mouseenter', function() {
@@ -696,19 +1661,64 @@
             }
         });
 
-        // Global mouse move for dragging
+        // Global mouse move for dragging and resizing
         document.addEventListener('mousemove', function(e) {
             if (isDragging && currentButton) {
+                e.preventDefault();
                 const containerRect = mapContainer.getBoundingClientRect();
                 
                 const x = e.clientX - containerRect.left - offset.x;
                 const y = e.clientY - containerRect.top - offset.y;
                 
                 const percentX = (x / containerRect.width) * 100;
-                const percentY = ((containerRect.height - y - currentButton.offsetHeight) / containerRect.height) * 100;
+                const percentY = (y / containerRect.height) * 100;
                 
-                currentButton.style.left = percentX + '%';
-                currentButton.style.bottom = percentY + '%';
+                currentButton.style.left = Math.max(0, Math.min(95, percentX)) + '%';
+                currentButton.style.top = Math.max(0, Math.min(95, percentY)) + '%';
+                currentButton.style.bottom = 'auto';
+            } else if (isResizing && currentButton) {
+                const containerRect = mapContainer.getBoundingClientRect();
+                const deltaX = e.clientX - initialResize.x;
+                const deltaY = e.clientY - initialResize.y;
+                
+                let newWidth = initialResize.width;
+                let newHeight = initialResize.height;
+                let newLeft = initialResize.left;
+                let newTop = initialResize.top;
+                
+                if (resizeHandle.classList.contains('se')) {
+                    newWidth = initialResize.width + deltaX;
+                    newHeight = initialResize.height + deltaY;
+                } else if (resizeHandle.classList.contains('sw')) {
+                    newWidth = initialResize.width - deltaX;
+                    newHeight = initialResize.height + deltaY;
+                    newLeft = initialResize.left + deltaX;
+                } else if (resizeHandle.classList.contains('ne')) {
+                    newWidth = initialResize.width + deltaX;
+                    newHeight = initialResize.height - deltaY;
+                    newTop = initialResize.top + deltaY;
+                } else if (resizeHandle.classList.contains('nw')) {
+                    newWidth = initialResize.width - deltaX;
+                    newHeight = initialResize.height - deltaY;
+                    newLeft = initialResize.left + deltaX;
+                    newTop = initialResize.top + deltaY;
+                }
+                
+                // Apply minimum size constraints
+                newWidth = Math.max(30, newWidth);
+                newHeight = Math.max(20, newHeight);
+                
+                // Convert to percentages
+                const percentWidth = (newWidth / containerRect.width) * 100;
+                const percentHeight = (newHeight / containerRect.height) * 100;
+                const percentLeft = (newLeft / containerRect.width) * 100;
+                const percentTop = (newTop / containerRect.height) * 100;
+                
+                currentButton.style.width = percentWidth + '%';
+                currentButton.style.height = percentHeight + '%';
+                currentButton.style.left = percentLeft + '%';
+                currentButton.style.top = percentTop + '%';
+                currentButton.style.bottom = 'auto';
             }
         });
 
@@ -716,17 +1726,29 @@
         document.addEventListener('mouseup', function() {
             if (isDragging && currentButton) {
                 currentButton.classList.remove('dragging');
-                isDragging = false;
-                currentButton = null;
             }
+            if (isResizing && currentButton) {
+                // Keep button selected after resize
+            }
+            
+            // Reset all states
+            isDragging = false;
+            isResizing = false;
+            currentButton = null;
+            resizeHandle = null;
         });
 
         // Click outside to deselect
         document.addEventListener('click', function(e) {
-            if (!e.target.closest('.room-button') && !e.target.closest('.room-info-panel')) {
+            if (!e.target.closest('.room-button') && !e.target.closest('.room-info-panel') && 
+                !e.target.closest('.edit-panel') && !e.target.closest('.control-button')) {
                 if (currentActiveButton) {
                     currentActiveButton.classList.remove('active');
                     currentActiveButton = null;
+                }
+                if (selectedButton && editMode) {
+                    selectedButton.classList.remove('selected');
+                    selectedButton = null;
                 }
                 hideRoomInfo();
             }
@@ -735,7 +1757,9 @@
         // ESC key to close or exit edit mode
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                if (editMode) {
+                if (editPanel.style.display === 'block') {
+                    closeEditPanel();
+                } else if (editMode) {
                     toggleEditMode();
                 } else if (currentActiveButton) {
                     currentActiveButton.classList.remove('active');
@@ -745,8 +1769,8 @@
             }
         });
 
-        // Initialize positions on load
-        initializePositions();
+        // Initialize on load
+        init();
     </script>
 </body>
 </html> 
