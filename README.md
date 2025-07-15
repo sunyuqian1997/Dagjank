@@ -1,17 +1,6 @@
 # Castle Interactive Map
 
-An interactive castle floor plan with clickable room overlays, draggable positioning, and image support.
-
-## Features
-
-- **Interactive Room Overlays**: Click or hover over rooms to see information
-- **Draggable Room Positioning**: Edit mode allows you to reposition room buttons
-- **Room Image Support**: Add images to rooms for visual reference
-- **Cursor-Following Info Panel**: Room information follows your mouse
-- **Resize Room Buttons**: Drag corners to resize room areas
-- **Add/Delete Rooms**: Create new rooms or remove existing ones
-- **Import/Export**: Save and load complete layouts with images
-- **Multiple Room Types**: Different colors for coffee rooms, restrooms, dining areas, etc.
+An interactive castle floor plan with clickable room overlays, draggable positioning, and image support. The application automatically loads room layouts from `loadme.json` and provides a full editing interface.
 
 ## Setup Instructions
 
@@ -29,6 +18,18 @@ An interactive castle floor plan with clickable room overlays, draggable positio
    ```
 3. Open http://localhost:3000 in your browser
 
+### Layout Loading
+
+The application automatically loads room layouts from `loadme.json` on startup. This file contains:
+- Room positions and properties
+- Floor assignments
+- Image mappings for each room
+
+**If automatic loading fails** (e.g., `loadme.json` is missing or corrupted):
+- The application will fall back to localStorage
+- You can manually import `loadme.json` using the **"Import Layout"** button
+- Or start with a blank layout and use **"Add Room"** to create rooms manually
+
 ### Image Management
 
 1. Place room images in the `room-images` folder
@@ -36,6 +37,7 @@ An interactive castle floor plan with clickable room overlays, draggable positio
    - Select the image file
    - Copy the file to the `room-images` folder manually
    - The system will reference it by filename
+3. Images are automatically mapped from `loadme.json` during initial load
 
 ## How to Use
 
@@ -57,44 +59,43 @@ An interactive castle floor plan with clickable room overlays, draggable positio
 - Upload/remove room images
 - Delete the room
 
-### Data Management
-- **Save Layout**: Saves all room positions and properties
-- **Reset to Default**: Restores original layout (deletes custom rooms)
-- **Export Layout**: Download layout as JSON file
-- **Import Layout**: Load previously saved layout
+
 
 ## Files
 
-- `castle-map-overlay.html` - Main interactive map application
+- `index.html` - Main interactive map application
+- `loadme.json` - Room layout and image mapping data (automatically loaded on startup)
 - `server.js` - Simple Node.js server for serving files
 - `start-server.sh` - Server startup script
 - `room-images/` - Directory for room images
 - `final.png` - Current castle floor plan image
-- `image.png` - Original castle floor plan image
 - `README.md` - This file
 
-## Room Types
 
-- **Default**: Blue
-- **Office**: Light Blue
-- **Coffee Room**: Orange
-- **Restroom**: Green
-- **Dining Room**: Deep Orange
-- **Storage**: Pink
-- **Lecture Hall**: Purple
-- **Library**: Deep Purple
 
-## Technical Details
 
-- Built with vanilla HTML, CSS, and JavaScript
-- Uses localStorage for data persistence (room properties only)
-- Images served from local file system via Node.js server
-- Responsive design with cursor-following info panel
-- Event delegation for better performance
 
-## Version History
+## Troubleshooting
 
-- v1.0: Basic interactive map with room information
-- v2.0: Added drag-and-drop positioning with save/load functionality
-- v3.0: Improved UI with transparent buttons and bottom-left info panel
-- v4.0: Added image support, cursor-following panel, room editing, and local server 
+**If rooms don't appear on startup:**
+1. Check that `loadme.json` exists in the project root
+2. Verify the file is valid JSON (check browser console for errors)
+3. Ensure the local server is running (rooms won't load from `file://` URLs)
+4. If automatic loading fails, use **"Import Layout"** button to manually load `loadme.json`
+
+**If images don't display:**
+1. Verify image files exist in the `room-images/` folder
+2. Check that filenames in `loadme.json` match actual file names
+3. Ensure the local server is running to serve image files
+
+
+## Credits
+
+Thanks Dugstugl 2025
+
+**Team Members** (alphabetical order):
+- Adam Smith
+- Alena Denisova
+- Antonio Liapis
+- Tim Merino
+- Yuqian (Uchan) Sun 
