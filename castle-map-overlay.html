@@ -1510,7 +1510,7 @@
             
             if (roomImages[imageKey]) {
                 currentRoomImage = roomImages[imageKey];
-                document.getElementById('previewImg').src = currentRoomImage;
+                document.getElementById('previewImg').src = `room-images/${roomImages[imageKey]}`;
                 document.getElementById('previewImg').style.display = 'block';
                 document.getElementById('removeImageBtn').style.display = 'block';
             } else {
@@ -1711,7 +1711,8 @@
             const roomImageDisplay = document.getElementById('roomImageDisplay');
             
             if (roomImages[imageKey]) {
-                roomImageDisplay.src = roomImages[imageKey];
+                // Use the stored filename to create the path
+                roomImageDisplay.src = `room-images/${roomImages[imageKey]}`;
                 roomImageDiv.classList.add('has-image');
             } else {
                 roomImageDiv.classList.remove('has-image');
@@ -1758,14 +1759,18 @@
             const file = event.target.files[0];
             if (!file || !file.type.startsWith('image/')) return;
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                currentRoomImage = e.target.result;
-                document.getElementById('previewImg').src = currentRoomImage;
-                document.getElementById('previewImg').style.display = 'block';
-                document.getElementById('removeImageBtn').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+            // For local server setup, we'll just store the filename
+            // User needs to manually copy the image to room-images folder
+            currentRoomImage = file.name;
+            
+            // Show preview using the expected path
+            const previewPath = `room-images/${file.name}`;
+            document.getElementById('previewImg').src = previewPath;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('removeImageBtn').style.display = 'block';
+            
+            // Alert user about manual copy requirement
+            alert(`Please copy "${file.name}" to the "room-images" folder in your project directory.`);
         }
 
         // Remove room image
