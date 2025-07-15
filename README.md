@@ -4,7 +4,16 @@ An interactive castle floor plan with clickable room overlays, draggable positio
 
 ## Setup Instructions
 
-### Running with Local Server (Recommended)
+### Option 1: Deploy to Vercel (Recommended for Production)
+
+The project can be deployed directly to Vercel without any server setup:
+1. Push project to GitHub
+2. Import to Vercel
+3. Deploy with one click
+
+See [DEPLOY.md](DEPLOY.md) for detailed Vercel deployment instructions.
+
+### Option 2: Running with Local Server (For Development)
 
 1. Make sure Node.js is installed on your system
 2. Run the server:
@@ -65,8 +74,10 @@ The application automatically loads room layouts from `loadme.json` on startup. 
 
 - `index.html` - Main interactive map application
 - `loadme.json` - Room layout and image mapping data (automatically loaded on startup)
-- `server.js` - Simple Node.js server for serving files
-- `start-server.sh` - Server startup script
+- `vercel.json` - Vercel deployment configuration
+- `DEPLOY.md` - Vercel deployment guide
+- `server.js` - Simple Node.js server for local development
+- `start-server.sh` - Server startup script for local development
 - `room-images/` - Directory for room images
 - `final.png` - Current castle floor plan image
 - `README.md` - This file
